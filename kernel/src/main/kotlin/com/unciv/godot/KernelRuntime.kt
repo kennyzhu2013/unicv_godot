@@ -19,7 +19,8 @@ import java.io.File
 /** 单进程仅初始化一个内核；不启动 LibGDX Application、音频或 GL 线程。 */
 object KernelRuntime {
     fun initialize(root: File) {
-        check(File("jsons").isDirectory) { "工作目录必须为 android/assets" }
+        check(File(root, "project.godot").isFile) { "--root 必须指向包含 project.godot 的 Godot 工程目录" }
+        check(File("jsons").isDirectory) { "工作目录必须为 Unciv-master/android/assets" }
         Gdx.files = HeadlessFiles()
         UncivGame.Current = UncivGame(true).apply {
             settings = GameSettings().apply {
@@ -27,7 +28,7 @@ object KernelRuntime {
                 autoAssignCityProduction = false
                 automatedUnitsMoveOnTurnStart = true
             }
-            files = UncivFiles(Gdx.files, File(root, "godot/.local/data").absolutePath)
+            files = UncivFiles(Gdx.files, File(root, ".local/data").absolutePath)
         }
         RulesetCache.loadRulesets(noMods = false)
     }

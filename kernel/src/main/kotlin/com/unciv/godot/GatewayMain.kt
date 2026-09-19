@@ -13,9 +13,11 @@ fun main(args: Array<String>) {
     fun argument(name: String, fallback: String): String = args.indexOf(name).let {
         if (it >= 0) args.getOrNull(it + 1) ?: error("缺少参数 $name") else fallback
     }
-    val root = File(argument("--root", "../..")).canonicalFile
+    val rootPath = argument("--root", "")
+    require(rootPath.isNotBlank()) { "缺少 --root，请指定 Godot 工程目录或通过 run.ps1 启动" }
+    val root = File(rootPath).canonicalFile
     val port = argument("--port", "17321").toInt()
-    val token = System.getenv("UNCIV_GATEWAY_TOKEN") ?: error("请通过 godot/run.ps1 启动：缺少本机会话令牌")
+    val token = System.getenv("UNCIV_GATEWAY_TOKEN") ?: error("请通过工程根目录的 run.ps1 启动：缺少本机会话令牌")
     require(token.length >= 32) { "本机会话令牌长度不足" }
     KernelRuntime.initialize(root)
     val session = GameSession(root)

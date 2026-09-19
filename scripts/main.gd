@@ -43,6 +43,8 @@ func _ready() -> void:
 	map.move_requested.connect(_preview_move)
 	var hello: Dictionary = await execute("hello")
 	if not hello.get("ok", false):
+		if "--smoke" in OS.get_cmdline_user_args():
+			get_tree().quit(1)
 		return
 	message.text = "内核已连接。读取现有单人存档，或打开验证开局。"
 	if "--smoke" in OS.get_cmdline_user_args():

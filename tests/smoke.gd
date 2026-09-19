@@ -6,6 +6,20 @@ var steps: Array[String] = []
 func run(frontend) -> void:
 	app = frontend
 	get_tree().create_timer(150.0).timeout.connect(func(): _fail("端到端验证超时"))
+	var expected_saves := ProjectSettings.globalize_path("res://.local/saves").simplify_path()
+	var actual_saves: String = app.client.save_directory.replace("\\", "/").simplify_path()
+	if OS.get_name() == "Windows":
+		expected_saves = expected_saves.to_lower()
+		actual_saves = actual_saves.to_lower()
+	if not check(actual_saves == expected_saves, "内核与 Godot 使用同一工程存档目录"):
+		return
+	for asset in ["Images.Tilesets/TileSets/FantasyHex/Tiles/Grassland",
+			"Images.AbsoluteUnits/TileSets/AbsoluteUnits/Units/Warrior",
+			"Images.AbsoluteUnits/TileSets/AbsoluteUnits/Units/Warrior-1",
+			"Images.AbsoluteUnits/TileSets/AbsoluteUnits/Units/Warrior-2"]:
+		if not check(app.map.texture(asset) != null, "加载真实素材：" + asset):
+			return
+	steps.append("工程存档目录一致，地形与单位分层纹理加载成功")
 	for x in range(-12, 13):
 		for y in range(-12, 13):
 			var coordinate := Vector2i(x, y)
@@ -16,6 +30,9 @@ func run(frontend) -> void:
 	await get_tree().process_frame
 	if not check(app.map.tiles.size() > 0 and app.map.unit_nodes.size() > 0, "Godot 地图与单位节点"):
 		return
+	for node in app.map.unit_nodes.values():
+		if not check(node.get_children().any(func(child): return child is Sprite2D and child.texture != null), "单位使用真实纹理而非文字占位"):
+			return
 	steps.append("读取原内核生成的存档并显示地图")
 	var warrior: Dictionary = {}
 	var settler: Dictionary = {}
@@ -70,6 +87,11 @@ func run(frontend) -> void:
 		return
 	steps.append("原 Kotlin AI 与回合结算")
 	if not await perform("save", {"name": "smoke-roundtrip"}):
+		return
+	var saved_directory: String = app.last_saved_path.replace("\\", "/").get_base_dir().simplify_path()
+	if OS.get_name() == "Windows":
+		saved_directory = saved_directory.to_lower()
+	if not check(saved_directory == expected_saves, "保存副本落在工程 .local/saves 中"):
 		return
 	var before: Dictionary = app.client.snapshot.duplicate(true)
 	if not await perform("load", {"path": app.last_saved_path}):

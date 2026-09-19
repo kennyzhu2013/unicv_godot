@@ -20,9 +20,9 @@ class GameSessionTest {
         private lateinit var fixture: File
 
         @BeforeClass @JvmStatic fun setup() {
-            root = File(System.getProperty("unciv.root"))
+            root = File(System.getProperty("godot.root")).canonicalFile
             KernelRuntime.initialize(root)
-            fixture = File(root, "godot/.local/tests/start.json")
+            fixture = File(root, ".local/tests/start.json")
             fixture.parentFile.mkdirs()
             fixture.writeText(UncivFiles.gameInfoToString(KernelRuntime.createDemo(), false))
         }
@@ -37,6 +37,24 @@ class GameSessionTest {
     }
     private fun loadedSession(file: File = fixture) = GameSession(root).also {
         run(it, "load", "path" to file.absolutePath)
+    }
+
+    @Test fun runtimePathsUseGodotProjectRoot() {
+        assertTrue("工程根目录包含 project.godot", File(root, "project.godot").isFile)
+        assertEquals("测试存档与 Godot 闭环使用同一目录",
+            File(root, ".local/tests").canonicalFile, fixture.parentFile.canonicalFile)
+        assertEquals("内核数据不写入原版源码目录",
+            File(root, ".local/data").canonicalFile,
+            File(UncivGame.Current.files.customDataDirectory!!).canonicalFile)
+        assertTrue("原版规则工作目录", File("jsons").isDirectory)
+        assertTrue("前端地形素材存在",
+            File(root, "Unciv-master/android/Images.Tilesets/TileSets/FantasyHex/Tiles/Grassland.png").isFile)
+        val session = loadedSession()
+        val hello = run(session, "hello")["data"]!!.jsonObject
+        val expectedSaves = File(root, ".local/saves").canonicalFile
+        assertEquals(expectedSaves, File(hello.text("saveDirectory")).canonicalFile)
+        val saved = run(session, "save", "name" to "test-project-layout")
+        assertEquals(File(expectedSaves, "test-project-layout.json"), File(saved.text("savedPath")).canonicalFile)
     }
 
     private fun <T> withNativeGame(game: GameInfo, operation: () -> T): T {
@@ -62,7 +80,7 @@ class GameSessionTest {
             other.getDiplomacyManager(player)!!.setFlag(DiplomacyFlags.AgreedToNotSettleNearUs, 100)
             assertTrue("承诺地点仍符合普通建城规则", settlerTile.canBeSettled(player))
         }
-        return File(root, "godot/.local/tests/settlement-promise.json").apply {
+        return File(root, ".local/tests/settlement-promise.json").apply {
             writeText(UncivFiles.gameInfoToString(game, true))
         }
     }

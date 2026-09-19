@@ -25,7 +25,7 @@ internal class GameSession(private val root: File) {
     var game: GameInfo? = null
         private set
     private val responses = LinkedHashMap<String, Pair<JsonObject, JsonObject>>()
-    private val saveDirectory = File(root, "godot/.local/saves").apply { mkdirs() }
+    private val saveDirectory = File(root, ".local/saves").apply { mkdirs() }
 
     @Synchronized
     fun handle(request: JsonObject): JsonObject {
@@ -174,7 +174,7 @@ internal class GameSession(private val root: File) {
     private fun unit(snapshot: PlayerSnapshot, id: Int): MapUnitView = snapshot.view.civView.getUnits().firstOrNull { it.id == id }
         ?: throw GatewayError("NOT_OWNED", "找不到己方单位")
     private fun city(snapshot: PlayerSnapshot, id: String): CityView {
-        return snapshot.view.civView.cities().firstOrNull { it.id == id }
+        return snapshot.view.civView.cities().firstOrNull { it.getCity().id == id }
             ?: throw GatewayError("NOT_OWNED", "找不到己方城市")
     }
     private fun destination(snapshot: PlayerSnapshot, request: JsonObject) =

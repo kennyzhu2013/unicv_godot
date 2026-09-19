@@ -17,7 +17,7 @@ var route: Array = []
 var selected := Vector2i(99999, 99999)
 var viewport_size := Vector2(900, 670)
 var font: Font = ThemeDB.fallback_font
-var asset_root := ProjectSettings.globalize_path("res://../android/")
+var asset_root := ProjectSettings.globalize_path("res://Unciv-master/android/")
 
 static func hex_to_pixel(hex: Vector2i) -> Vector2:
 	return Vector2(1.5 * RADIUS * (hex.y - hex.x), -sqrt(3.0) * 0.5 * RADIUS * (hex.x + hex.y))
